@@ -1,1 +1,4 @@
 .vscode/
+examples/LED_example/libraries/*
+examples/LED_example/soft_gestures.h
+examples/LED_example/soft_gestures.cpp
