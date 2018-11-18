@@ -5,7 +5,8 @@
 #define BUFFERLOW 5
 
 // TODO Remove define and allow programmer to define value
-#define BUFFERREGION 150
+#define BUFFERREGION 100
+#define SPIKEREGION 200
 #define BUFFERHOLD 2000
 
 /**
@@ -14,41 +15,33 @@
  * @param pin designated pin to listen on
  * @param gestureFlags designates which gestures to listen to.
  */
-GestureListener::GestureListener(byte pin, byte flags){
+GestureListener::GestureListener(byte pin){
     _pin = pin;
-    _flags = flags;
 }
 
 bool GestureListener::read(){
     int value = analogRead(_pin);
     if ((finishedGesture || current.type <= 0) && value > BUFFERLOW){
         finishedGesture = false;
+        current.type = GestureListener::BUTTON;
         current.beginValue = value;
         current.endValue = value;
-        current.type = GestureListener::BUTTON;
         current.duration = millis();
         current.hold = false;
-    } else if (current.type > 0 && abs(value - current.beginValue) > BUFFERREGION && value > BUFFERLOW){
-        if(current.type != GestureListener::RUB){
+    } else if (current.type > 0 && abs(value - current.endValue) > BUFFERREGION && value > BUFFERLOW){
+        if(abs(current.endValue - value) > SPIKEREGION && current.beginValue == current.endValue){
+            current.beginValue = value;
+        }else if(abs(current.endValue - value) < SPIKEREGION){
             if(current.type == GestureListener::BUTTON){
                 current.type = GestureListener::SWIPE;
             }
+            current.endValue = value;
         }
-        if(current.type == GestureListener::SWIPE && 
-            GestureListener::sgn(value - current.endValue) == 
-            GestureListener::sgn(current.beginValue - current.endValue) && 
-            !current.hold){
-            current.type = GestureListener::RUB;
-        }
-        current.endValue = value;
     } else if (current.type > 0 && value < BUFFERLOW){
         finishedGesture = true;
     }
     if(current.type > 0 && !current.hold && millis() - current.duration > BUFFERHOLD){
         current.hold = true;
-        if(current.type == GestureListener::RUB){
-            current.type = GestureListener::SWIPE;
-        }
     }
     return finishedGesture || current.hold;
 }

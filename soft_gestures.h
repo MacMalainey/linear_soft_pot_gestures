@@ -16,22 +16,16 @@ struct Gesture
 class GestureListener
 {
     public:
-        GestureListener(byte pin, byte flags);
+        GestureListener(byte pin);
         int readRaw();
         bool read();
         Gesture getGesture();
         static const byte SWIPE = 1;
-        static const byte RUB = 2;
-        static const byte BUTTON = 3;
-        static const byte SWIPE_FLAG = 0b1;
-        static const byte RUB_FLAG = 0b10;
-        static const byte BUTTON_FLAG = 0b100;
-        static const byte SWIPE_HOLD_FLAG = 0b1000;
+        static const byte BUTTON = 2;
     private:
         static int sgn(int number);
         Gesture current{0, 0, 0, 0, false};
         bool finishedGesture;
         byte _pin;
-        byte _flags;
 };
 #endif

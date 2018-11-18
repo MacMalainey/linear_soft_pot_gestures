@@ -3,9 +3,9 @@
 #define shiftPin 6
 #define clockPin 8
 #define holdPin 9
-#define led1Pin 1
-#define led2Pin 2
-#define led3Pin 3
+#define led1Pin 0
+#define led2Pin 3
+#define led3Pin 5
 
 bool shiftLEDS[] = {
   0, 0, 0, 0, 0, 0, 0, 0
@@ -14,6 +14,7 @@ bool swipe = false;
 bool button = false;
 unsigned long lastButton = 0;
 unsigned long lastLED = 0;
+byte buttonPlace = 0;
 
 void setup() {
   pinMode(shiftPin, OUTPUT);
@@ -22,10 +23,13 @@ void setup() {
   pinMode(led1Pin, OUTPUT);
   pinMode(led2Pin, OUTPUT);
   pinMode(led3Pin, OUTPUT);
+  digitalWrite(4, LOW);
+  digitalWrite(3, LOW);
+  digitalWrite(5, LOW);
   Serial.begin(9600);
 }
 
-GestureListener listener(4, 0);
+GestureListener listener(4);
 
 void loop() {
   if(listener.read()){
@@ -42,6 +46,11 @@ void loop() {
     Serial.println(gesture.hold);
     swipe = gesture.type == GestureListener::SWIPE || swipe;
     button = gesture.type == GestureListener::BUTTON;
+    buttonPlace = gesture.endValue / 300 +3;
+    lastButton = millis();
+  } else if(button){
+    button = false;
+    digitalWrite(buttonPlace, LOW);
   }
   if(swipe && millis() - lastLED > 100){
     bool allTrue = true;
@@ -67,6 +76,9 @@ void loop() {
     shiftOut(shiftPin, clockPin, MSBFIRST, shift_array());
     digitalWrite(holdPin, HIGH);
     lastLED = millis();
+  }
+  if(button){
+    digitalWrite(buttonPlace, HIGH);
   }
 }
 
