@@ -38,7 +38,9 @@ void loop() {
     Serial.println(gesture.endValue);
     Serial.print("Duration: ");
     Serial.println(gesture.duration);
-    swipe = gesture.type == GestureListener::SWIPE;
+    Serial.print("Hold: ");
+    Serial.println(gesture.hold);
+    swipe = gesture.type == GestureListener::SWIPE || swipe;
     button = gesture.type == GestureListener::BUTTON;
   }
   if(swipe && millis() - lastLED > 100){

@@ -28,6 +28,7 @@ class GestureListener
         static const byte BUTTON_FLAG = 0b100;
         static const byte SWIPE_HOLD_FLAG = 0b1000;
     private:
+        static int sgn(int number);
         Gesture current{0, 0, 0, 0, false};
         bool finishedGesture;
         byte _pin;

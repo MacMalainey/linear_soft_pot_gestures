@@ -5,7 +5,7 @@
 #define BUFFERLOW 5
 
 // TODO Remove define and allow programmer to define value
-#define BUFFERREGION 100
+#define BUFFERREGION 150
 #define BUFFERHOLD 2000
 
 /**
@@ -20,24 +20,37 @@ GestureListener::GestureListener(byte pin, byte flags){
 }
 
 bool GestureListener::read(){
-    uint8_t value = analogRead(_pin);
+    int value = analogRead(_pin);
     if ((finishedGesture || current.type <= 0) && value > BUFFERLOW){
         finishedGesture = false;
         current.beginValue = value;
         current.endValue = value;
         current.type = GestureListener::BUTTON;
         current.duration = millis();
-    } else if (current.type > 0 && abs(value - current.endValue) > BUFFERREGION && value > BUFFERLOW){
-        if(current.type != 2){
+        current.hold = false;
+    } else if (current.type > 0 && abs(value - current.beginValue) > BUFFERREGION && value > BUFFERLOW){
+        if(current.type != GestureListener::RUB){
             if(current.type == GestureListener::BUTTON){
                 current.type = GestureListener::SWIPE;
             }
+        }
+        if(current.type == GestureListener::SWIPE && 
+            GestureListener::sgn(value - current.endValue) == 
+            GestureListener::sgn(current.beginValue - current.endValue) && 
+            !current.hold){
+            current.type = GestureListener::RUB;
         }
         current.endValue = value;
     } else if (current.type > 0 && value < BUFFERLOW){
         finishedGesture = true;
     }
-    return finishedGesture;
+    if(current.type > 0 && !current.hold && millis() - current.duration > BUFFERHOLD){
+        current.hold = true;
+        if(current.type == GestureListener::RUB){
+            current.type = GestureListener::SWIPE;
+        }
+    }
+    return finishedGesture || current.hold;
 }
 
 int GestureListener::readRaw(){
@@ -45,11 +58,17 @@ int GestureListener::readRaw(){
 }
 
 Gesture GestureListener::getGesture(){
-    finishedGesture = false;
     Gesture cacheGesture = current;
     cacheGesture.duration = millis() - current.duration;
-    if(!cacheGesture.hold){
-        current = {0, 0, 0, 0};
+    if(finishedGesture){
+        current = {0, 0, 0, 0, false};
     }
+    finishedGesture = false;
     return cacheGesture;
+}
+
+int GestureListener::sgn(int number) {
+  if (number < 0) return -1;
+  if (number > 0) return 1;
+  return 0;
 }
